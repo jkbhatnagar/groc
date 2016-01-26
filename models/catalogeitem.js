@@ -2,8 +2,8 @@ var mongoose     = require('mongoose');
 var Schema       = mongoose.Schema;
 
 var catalogeSchema   = new Schema({
-//    _id: String,
-    _id: Number,
+    dbid: String,
+    id: Number,
     name: String,
     price: Number,
     unit: String,
@@ -11,7 +11,7 @@ var catalogeSchema   = new Schema({
     onspecial: Boolean,
     maxqty: Number,
     onspecialprice: Number,
-    itemtype: String,
+    itemtype: String
 });
 
 module.exports = mongoose.model('Grocitem', catalogeSchema);

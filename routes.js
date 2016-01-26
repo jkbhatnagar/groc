@@ -29,22 +29,18 @@ router.route('/catalogeitems')
 // Create a message (using POST at http://localhost:8080/messages)
 router.route('/catalogeitems')
     .post(function(req, res) {
-        var catalogeitem = new Catelogeitem();
-        // Set text and user values from the request
-	catalogeitem.name = req.body.text;
-        // Save message and check for errors
-        catalogeitem.save(function(err) {
+        Catelogeitem.create(req.body, function (err, item){
             if (err)
                 res.send(err);
-            res.json({ message: 'Message created successfully!' });
+            res.json({ message: 'Successfully created!' });
         });
     });
 
 
-router.route('/messages/:message_id')
+router.route('/catalogeitems/:dbid')
     // GET message with id (using a GET at http://localhost:8080/messages/:message_id)
     .get(function(req, res) {
-        Catelogeitem.findById(req.params._id, function(err, item) {
+        Catelogeitem.findById(req.params.dbid, function(err, item) {
             if (err)
                 res.send(err);
             res.json(item);
@@ -53,29 +49,19 @@ router.route('/messages/:message_id')
 
     // Update message with id (using a PUT at http://localhost:8080/messages/:message_id)
     .put(function(req, res) {
-        Catelogeitem.findById(req.params._id, function(err, item) {
+        Catelogeitem.findByIdAndUpdate(req.params.dbid, req.body, function(err, item) {
             if (err)
                 res.send(err);
-            // Update the message text
-	    item.name = req.body.text;
-            item.save(function(err) {
-                if (err)
-                    res.send(err);
-                res.json({ message: 'Message successfully updated!' });
+                res.json({ message: 'Successfully updated!' });
             });
-
-        });
-    })
+        })
 
     // Delete message with id (using a DELETE at http://localhost:8080/messages/:message_id)
     .delete(function(req, res) {
-        Catelogeitem.remove({
-            _id: req.params._id
-        }, function(err, item) {
+        Catelogeitem.findByIdAndRemove(req.params.dbid, function(err, item) {
             if (err)
                 res.send(err);
-
-            res.json({ message: 'Successfully deleted message!' });
+            res.json({ message: 'Successfully deleted!' });
         });
     });
 
