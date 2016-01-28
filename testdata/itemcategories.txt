@@ -1,0 +1,10 @@
+{"catname":"Vegetables","status":"active"}
+{"catname":"Milk Products","status":"active"}
+{"catname":"Fruits","status":"active"}
+{"catname":"Bakery Products","status":"active"}
+{"catname":"Meats and Poultry","status":"active"}
+{"catname":"Breakfast","status":"active"}
+{"catname":"Honey and Jams","status":"active"}
+{"catname":"Sauces and Spreads","status":"active"}
+{"catname":"Confetti","status":"active"}]
+
