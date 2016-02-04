@@ -26,7 +26,7 @@ var userSchema   = new Schema({
     password: { type: String, required: true },
     dob: { type: Date, required: true },
     mobile: { type: String, required: true, unique: true },
-    lastlogin: { type: Date},
+    lastlogin: { type: Date}
 },
 {
     timestamps: { }

@@ -1,4 +1,6 @@
 var express = require('express');
+var jwt    = require('jsonwebtoken');
+
 
 // Get the router
 var router = express.Router();
@@ -20,6 +22,158 @@ function dateDisplayed(timestamp) {
     return (date.getMonth() + 1 + '/' + date.getDate() + '/' + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
 };
 
+//------------------------Authentication---------------------------
+
+var User             = require('./models/user');
+
+// GET all users (using a GET at http://localhost:8080/users)
+router.route('/users')
+    .get(function(req, res) {
+        User.find(function(err, users) {
+            if (err)
+                res.send(err);
+            res.json(users);
+        });
+    });
+
+// Create a users (using POST at http://localhost:8080/users)
+router.route('/users')
+    .post(function(req, res) {
+        User.create(
+            {
+                firstname : req.body.firstname,
+                lastname : req.body.lastname,
+                username : req.body.username,
+                email : req.body.email,
+                password : req.body.password,
+                dob : req.body.dob,
+                mobile : req.body.mobile
+
+            }, function (err, item){
+            if (err)
+                res.send(err);
+            res.json({ message: 'User Successfully created!' });
+        });
+    });
+
+router.post('/authenticate', function(req, res) {
+
+  // find the user
+  User.findOne({
+    username: req.body.username
+  }, function(err, user) {
+
+    if (err) throw err;
+
+    if (!user) {
+      res.json({ success: false, message: 'Authentication failed. User not found.' });
+    } else if (user) {
+
+      // check if password matches
+      if (user.password != req.body.password) {
+        res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+      } else {
+
+        // if user is found and password is right
+        // create a token
+        var token = jwt.sign(user, 'ilovescotchyscotch', {
+          expiresIn: 3600 // expires in seconds
+        });
+
+        // return the information including token as JSON
+        res.json({
+          success: true,
+          message: 'Enjoy your token!',
+          token: token
+        });
+      }   
+    }
+  });
+});
+
+router.use(function(req, res, next) {
+
+  // check header or url parameters or post parameters for token
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+  // decode token
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, 'ilovescotchyscotch', function(err, decoded) {      
+      if (err) {
+        return res.json({ success: false, message: 'Failed to authenticate token.' });    
+      } else {
+        // if everything is good, save to request for use in other routes
+        req.decoded = decoded;    
+        next();
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(403).send({ 
+        success: false, 
+        message: 'No token provided.' 
+    });
+    
+  }
+});
+
+//------------------------Users---------------------------
+
+router.route('/users/:dbid')
+    // GET users with id (using a GET at http://localhost:8080/users/:message_id)
+    .get(function(req, res) {
+        User.findById(req.params.dbid, function(err, item) {
+            if (err)
+                res.send(err);
+            res.json(item);
+        });
+    })
+
+    // Update users with id (using a PUT at http://localhost:8080/users/:message_id)
+    .put(function(req, res) {
+        User.findByIdAndUpdate(req.params.dbid, 
+            {
+                firstname : req.body.firstname,
+                lastname : req.body.lastname,
+                username : req.body.username,
+                email : req.body.email,
+                password : req.body.password,
+                dob : req.body.dob,
+                mobile : req.body.mobile
+
+            }, function(err, item) {
+            if (err)
+                res.send(err);
+                res.json({ message: 'User Successfully updated!' });
+        });
+    })
+
+    // Delete users with id (using a DELETE at http://localhost:8080/users/:message_id)
+    .delete(function(req, res) {
+        User.findByIdAndRemove(req.params.dbid, function(err, item) {
+            if (err)
+                res.send(err);
+            res.json({ message: 'User Successfully deleted!' });
+        });
+    });
+
+router.route('/users/:dbid')
+    // Update user last login time (using a POST at http://localhost:8080/users/:dbid)
+    .post(function(req, res) {
+        User.findByIdAndUpdate(req.params.dbid, 
+            {
+             lastlogin : Date.now()
+            }, function(err, item) {
+            if (err)
+                res.send(err);
+                res.json({ message: 'User Successfully updated!' });
+        });
+    });
 
 //------------------------ItemCategories---------------------------
 var ItemCategory             = require('./models/itemcategories');
@@ -207,93 +361,6 @@ router.route('/catalogeitems/:dbid')
         });
     });
 
-//------------------------Users---------------------------
-var User             = require('./models/user');
-
-// GET all users (using a GET at http://localhost:8080/users)
-router.route('/users')
-    .get(function(req, res) {
-        User.find(function(err, users) {
-            if (err)
-                res.send(err);
-            res.json(users);
-        });
-    });
-
-// Create a users (using POST at http://localhost:8080/users)
-router.route('/users')
-    .post(function(req, res) {
-        User.create(
-            {
-                firstname : req.body.firstname,
-                lastname : req.body.lastname,
-                username : req.body.username,
-                email : req.body.email,
-                password : req.body.password,
-                dob : req.body.dob,
-                mobile : req.body.mobile
-
-            }, function (err, item){
-            if (err)
-                res.send(err);
-            res.json({ message: 'User Successfully created!' });
-        });
-    });
-
-
-router.route('/users/:dbid')
-    // GET users with id (using a GET at http://localhost:8080/users/:message_id)
-    .get(function(req, res) {
-        User.findById(req.params.dbid, function(err, item) {
-            if (err)
-                res.send(err);
-            res.json(item);
-        });
-    })
-
-    // Update users with id (using a PUT at http://localhost:8080/users/:message_id)
-    .put(function(req, res) {
-        User.findByIdAndUpdate(req.params.dbid, 
-            {
-                firstname : req.body.firstname,
-                lastname : req.body.lastname,
-                username : req.body.username,
-                email : req.body.email,
-                password : req.body.password,
-                dob : req.body.dob,
-                mobile : req.body.mobile
-
-            }, function(err, item) {
-            if (err)
-                res.send(err);
-                res.json({ message: 'User Successfully updated!' });
-        });
-    })
-
-    // Delete users with id (using a DELETE at http://localhost:8080/users/:message_id)
-    .delete(function(req, res) {
-        User.findByIdAndRemove(req.params.dbid, function(err, item) {
-            if (err)
-                res.send(err);
-            res.json({ message: 'User Successfully deleted!' });
-        });
-    });
-
-
-router.route('/users/:dbid')
-    // Update user last login time (using a POST at http://localhost:8080/users/:dbid)
-    .post(function(req, res) {
-        User.findByIdAndUpdate(req.params.dbid, 
-            {
-             lastlogin : Date.now()
-            }, function(err, item) {
-            if (err)
-                res.send(err);
-                res.json({ message: 'User Successfully updated!' });
-        });
-    });
-
-
 //------------------------QuickLists---------------------------
 
 var QuickList             = require('./models/quicklist');
@@ -315,8 +382,8 @@ router.route('/quicklists/:userid')
             if (err)
                 res.send(err);
             else if (!user)
-                res.json({message: req.params.userid});
-                //res.json({message: 'Invalid User'});
+                //res.json({message: req.params.userid});
+                res.json({message: 'Invalid User'});
             else
             QuickList.find({_userid : req.params.userid}, function(err, item) {
                 if (err)
@@ -758,6 +825,8 @@ router.route('/Orders/:userid/:Orderid')
 //                 });
 //         });
 //     });
+
+//
 
 //------------------------EXPORT---------------------------
 module.exports = router;
