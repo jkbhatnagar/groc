@@ -137,7 +137,7 @@ router.route('/authenticate')
                 });
 
                 res.json({
-                  status: success,
+                  status: 'success',
                   message: 'Enjoy your token!',
                   token: token,
                   data: user
