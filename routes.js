@@ -137,7 +137,7 @@ router.route('/authenticate')
                 });
 
                 res.json({
-                  success: true,
+                  status: success,
                   message: 'Enjoy your token!',
                   token: token
                 });
@@ -317,7 +317,7 @@ router.route('/catalogeitemsfilterd')
     });
 
 // GET all catalogeitems by ItemCategory (using a GET at http://localhost:8080/catalogeitems/:catid)
-router.route('/catalogeitems/:catid')
+router.route('/catalogeitems/itemcategory/:catid')
     .get(function(req, res) {
         ItemCategory.findById(req.params.catid, function(err, catitem) {
             if (err)
