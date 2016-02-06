@@ -29,16 +29,68 @@ var User             = require('./models/user');
 // GET all users (using a GET at http://localhost:8080/users)
 router.route('/users')
     .get(function(req, res) {
-        User.find(function(err, users) {
+        User.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(users);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
+        });
+    });
+
+router.route('/users/username/:username')
+    // GET users with id (using a GET at http://localhost:8080/users/:message_id)
+    .get(function(req, res, next) {
+        User.findOne({username : req.params.username}, function(err, user) {
+            if (err)
+                res.status(400).send({error : "Bad request: " + req.params.username});
+            if (!user)
+                res.status(600).send({error : "User Not Found: " + req.params.username});
+            if(user)
+                res.status(601).send({error : "Username already used: " + req.params.username});
+            });
+        });
+
+router.route('/users/email/:email')
+    .get(function(req, res) {
+        User.findOne({email : req.params.email}, function(err, user) {
+            if (err)
+                res.status(400).send({error : "Bad request: " + req.params.email});
+            if (!user)
+                res.status(601).send({error : "User Not Found: " + req.params.email});
+            if(user)
+                res.status(602).send({error : "Email already used: " + req.params.email});
+        });
+    });
+
+router.route('/users/mobile/:mobile')
+    .get(function(req, res) {
+        User.findOne({mobile : req.params.mobile}, function(err, user) {
+            if (err)
+                res.status(400).send({error : "Bad request: " + req.params.mobile});
+            if (!user)
+                res.status(601).send({error : "User Not Found: " + req.params.mobile});
+            if(user)
+                res.status(602).send({error : "Mobile already used: " + req.params.mobile});
         });
     });
 
 // Create a users (using POST at http://localhost:8080/users)
 router.route('/users')
     .post(function(req, res) {
+      if(!req.body.firstname)
+          res.status(400).send({error : "Bad request: firstname"});
+      else if (!req.body.lastname)
+          res.status(400).send({error : "Bad request: lastname"});
+      else if (!req.body.username)
+          res.status(400).send({error : "Bad request: username"});
+      else if (!req.body.email)
+          res.status(400).send({error : "Bad request: email"});
+      else if (!req.body.password)
+          res.status(400).send({error : "Bad request: Password"});
+      else if (!req.body.dob)
+          res.status(400).send({error : "Bad request: dob"});
+      else if (!req.body.mobile)
+          res.status(400).send({error : "Bad request: mobile"});
+      else
         User.create(
             {
                 firstname : req.body.firstname,
@@ -51,45 +103,49 @@ router.route('/users')
 
             }, function (err, item){
             if (err)
-                res.send(err);
-            res.json({ message: 'User Successfully created!' });
-        });
+                res.status(400).send({error : "Bad request: firstname : " + err});
+            else
+                res.json({ message: 'User Successfully created!' });
+            }
+        );
     });
 
-router.post('/authenticate', function(req, res) {
+router.route('/authenticate')
+    .post(function(req, res) {
 
-  // find the user
-  User.findOne({
-    username: req.body.username
-  }, function(err, user) {
+      if(!req.body.username)
+          res.status(400).send({error : "Bad request: Username"});
+      else if (!req.body.password)
+          res.status(400).send({error : "Bad request: Password"});
+      else
+          User.findOne({username: req.body.username}, function(err, user) {
 
-    if (err) throw err;
+            if (err)
+                res.status(400).send({error : "Bad request: "});
 
-    if (!user) {
-      res.json({ success: false, message: 'Authentication failed. User not found.' });
-    } else if (user) {
+            if (!user)
+                res.status(600).send({error : "Authentication failed. User not found: " + req.body.username});
 
-      // check if password matches
-      if (user.password != req.body.password) {
-        res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-      } else {
+            if (user) {
+              if (user.password != req.body.password) {
+                res.status(600).send({error : "Authentication failed. Wrong password." + req.body.password});
+                return
+              }
+              else {
+                var token = jwt.sign(user, 'ilovescotchyscotch', {
+                  expiresIn: 3600 // expires in seconds
+                });
 
-        // if user is found and password is right
-        // create a token
-        var token = jwt.sign(user, 'ilovescotchyscotch', {
-          expiresIn: 3600 // expires in seconds
-        });
+                res.json({
+                  success: true,
+                  message: 'Enjoy your token!',
+                  token: token
+                });
+              }
+            }
+          })
+    });
 
-        // return the information including token as JSON
-        res.json({
-          success: true,
-          message: 'Enjoy your token!',
-          token: token
-        });
-      }   
-    }
-  });
-});
 
 router.use(function(req, res, next) {
 
@@ -102,7 +158,10 @@ router.use(function(req, res, next) {
     // verifies secret and checks exp
     jwt.verify(token, 'ilovescotchyscotch', function(err, decoded) {      
       if (err) {
-        return res.json({ success: false, message: 'Failed to authenticate token.' });    
+        return res.status(403).send({ 
+            success: false, 
+            message: 'Invalid Token'
+        });
       } else {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;    
@@ -130,7 +189,7 @@ router.route('/users/:dbid')
         User.findById(req.params.dbid, function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     })
 
@@ -184,7 +243,7 @@ router.route('/itemcategories')
         ItemCategory.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         })
         .sort({"catname":1});
     });
@@ -206,7 +265,7 @@ router.route('/itemcategories/:dbid')
         ItemCategory.findById(req.params.dbid, function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     })
 
@@ -234,10 +293,10 @@ var Catelogeitem     = require('./models/catalogeitem');
 // GET all catalogeitems (using a GET at http://localhost:8080/catalogeitems)
 router.route('/catalogeitems')
     .get(function(req, res) {
-        Catelogeitem.find(function(err, items) {
+        Catelogeitem.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(items);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         })
         .sort({"_itemtype":1})
         .sort({"name":1});
@@ -250,10 +309,10 @@ router.route('/catalogeitemsfilterd')
         if (!req.body._listitems)
             res.send(err);
         else
-            Catelogeitem.find({_id : { $in: req.body._listitems }}, function(err, items) {
+            Catelogeitem.find({_id : { $in: req.body._listitems }}, function(err, item) {
                 if (err)
                     res.send(err);
-                res.json(items);
+                res.json({status: 'Success', data:item, timestamp: Date.now()});
             });
     });
 
@@ -266,10 +325,10 @@ router.route('/catalogeitems/:catid')
             else if (!catitem)
                 res.json({message: 'Invalid ItemCategory'});
             else
-                Catelogeitem.find({_itemtype: req.params.catid}, function(err, items) {
+                Catelogeitem.find({_itemtype: req.params.catid}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json(items);
+                    res.json({status: 'Success', data:item, timestamp: Date.now()});
                 });
             })
         .sort({"name":1});
@@ -322,7 +381,7 @@ router.route('/catalogeitems/:dbid')
         Catelogeitem.findById(req.params.dbid, function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     })
 
@@ -371,7 +430,7 @@ router.route('/quicklists')
         QuickList.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     });
 
@@ -388,7 +447,7 @@ router.route('/quicklists/:userid')
             QuickList.find({_userid : req.params.userid}, function(err, item) {
                 if (err)
                     res.send(err);
-                res.json(item);
+                res.json({status: 'Success', data:item, timestamp: Date.now()});
             });
         });
     });
@@ -489,7 +548,7 @@ router.route('/shoppinglists')
         ShoppingList.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     });
 
@@ -506,7 +565,7 @@ router.route('/shoppinglists/:userid')
             ShoppingList.find({_userid : req.params.userid}, function(err, item) {
                 if (err)
                     res.send(err);
-                res.json(item);
+                res.json({status: 'Success', data:item, timestamp: Date.now()});
             });
         });
     });
@@ -524,7 +583,7 @@ router.route('/shoppinglists/:userid/:shoppinglistid')
                 ShoppingList.find({_id : req.params.shoppinglistid}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json(item);
+                    res.json({status: 'Success', data:item, timestamp: Date.now()});
                 });
         });
     });
@@ -643,7 +702,7 @@ router.route('/orders')
         Order.find(function(err, item) {
             if (err)
                 res.send(err);
-            res.json(item);
+            res.json({status: 'Success', data:item, timestamp: Date.now()});
         });
     });
 
@@ -660,7 +719,7 @@ router.route('/orders/:userid')
             Order.find({_userid : req.params.userid}, function(err, item) {
                 if (err)
                     res.send(err);
-                res.json(item);
+                res.json({status: 'Success', data:item, timestamp: Date.now()});
             });
         });
     });
@@ -678,7 +737,7 @@ router.route('/orders/:userid/:orderid')
             Order.find({_id : req.params.orderid}, function(err, item) {
                 if (err)
                     res.send(err);
-                res.json(item);
+                res.json({status: 'Success', data:item, timestamp: Date.now()});
             });
         });
     });
