@@ -55,9 +55,9 @@ router.route('/users/email/:email')
             if (err)
                 res.status(400).send({error : "Bad request: " + req.params.email});
             if (!user)
-                res.status(601).send({error : "User Not Found: " + req.params.email});
+                res.status(600).send({error : "User Not Found: " + req.params.email});
             if(user)
-                res.status(602).send({error : "Email already used: " + req.params.email});
+                res.status(601).send({error : "Email already used: " + req.params.email});
         });
     });
 
@@ -67,9 +67,9 @@ router.route('/users/mobile/:mobile')
             if (err)
                 res.status(400).send({error : "Bad request: " + req.params.mobile});
             if (!user)
-                res.status(601).send({error : "User Not Found: " + req.params.mobile});
+                res.status(600).send({error : "User Not Found: " + req.params.mobile});
             if(user)
-                res.status(602).send({error : "Mobile already used: " + req.params.mobile});
+                res.status(601).send({error : "Mobile already used: " + req.params.mobile});
         });
     });
 
@@ -105,7 +105,7 @@ router.route('/users')
             if (err)
                 res.status(400).send({error : "Bad request: firstname : " + err});
             else
-                res.json({ message: 'User Successfully created!' });
+                res.status(201).json({ status : 'success', message: 'User Successfully created!' });
             }
         );
     });
@@ -133,12 +133,13 @@ router.route('/authenticate')
               }
               else {
                 var token = jwt.sign(user, 'ilovescotchyscotch', {
-                  expiresIn: 3600 // expires in seconds
+                  expiresIn: 86400 // expires in seconds
                 });
 
                 res.json({
                   status: 'success',
                   message: 'Enjoy your token!',
+                  validityInSeconds: 86400
                   token: token,
                   data: user
                 });
@@ -463,7 +464,8 @@ router.route('/quicklists/:userid')
             }, function (err, item){
             if (err)
                 res.send(err);
-            res.json({ message: 'QuickList Successfully created!' });
+            else
+                res.status(201).json({ status : 'success', message: 'QuickList Successfully created!' });
         });
     });
 
@@ -479,7 +481,8 @@ router.route('/quicklists/:userid/:itemid')
                 QuickList.update({_userid : req.params.userid}, { $pull: { _listitems : req.params.itemid }}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json({ message: 'QuickList Item Successfully Removed!' });
+                    else
+                        res.status(201).json({ status : 'success', message: 'QuickList Item Successfully Removed!' });
                 });
         });
     })
@@ -495,7 +498,8 @@ router.route('/quicklists/:userid/:itemid')
                 QuickList.update({_userid : req.params.userid}, { $addToSet: { _listitems : req.params.itemid }}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json({ message: 'QuickList Item Successfully Added!' });
+                    else
+                        res.status(201).json({ status : 'success', message: 'QuickList Item Successfully Added!' });
                 });
         });
     });
@@ -515,7 +519,8 @@ router.route('/quicklists/:userid')
                 QuickList.update({_userid : req.params.userid}, { $pullAll: { _listitems : req.body._listitems }}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json({ message: 'Successfully Deleted!' });
+                    else
+                        res.status(201).json({ status : 'success', message: 'QuickList Items Successfully Removed!' });
                 });
         });
     })
@@ -534,7 +539,8 @@ router.route('/quicklists/:userid')
                 QuickList.update({_userid : req.params.userid}, { $addToSet: { _listitems : { $each: req.body._listitems }}}, function(err, item) {
                     if (err)
                         res.send(err);
-                    res.json({ message: 'Successfully ADDED!' });
+                    else
+                        res.status(201).json({ status : 'success', message: 'QuickList Items Successfully Added!' });
                 });
         });
     });
