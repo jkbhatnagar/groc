@@ -103,9 +103,25 @@ router.route('/users')
 
             }, function (err, item){
             if (err)
-                res.status(400).send({error : "Bad request: firstname : " + err});
+                res.status(400).send({error : "Bad request: " + err});
             else
-                res.status(201).json({ status : 'success', message: 'User Successfully created!' });
+                //res.status(200).json({ status : 'success', message: 'User Successfully created!' });
+                User.findOne({username: req.body.username}, function(err, user) {
+                if (err)
+                    res.status(400).send({error : "Bad request: "});
+                else
+                    var token = jwt.sign(user, 'ilovescotchyscotch', {
+                        expiresIn: 86400 // expires in seconds
+                    });
+
+                    res.status(200).json({
+                      status: 'success',
+                      message: 'User Successfully created! Enjoy your token!',
+                      validityInSeconds: 86400,
+                      token: token,
+                      data: user
+                    });
+                });
             }
         );
     });
