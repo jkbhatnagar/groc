@@ -7,19 +7,18 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "async": "^1.5.2",
-    "bcrypt-nodejs": "0.0.3",
-    "body-parser": "~1.13.3",
-    "express": "~4.13.2",
-    "express-session": "^1.13.0",
-    "jsonwebtoken": "^5.5.4",
-    "mongoose": "~4.1.0",
-    "morgan": "^1.6.1",
+    "async": "latest",
+    "bcrypt": "^0.8.7",
+    "body-parser": "latest",
+    "cors": "^2.7.1",
+    "express": "latest",
+    "express-session": "latest",
+    "jsonwebtoken": "^7.0.1",
+    "mongoose": "latest",
+    "morgan": "^1.7.0",
+    "nodemon": "^1.9.2",
     "passport": "^0.3.2",
-    "passport-local": "^1.0.0"
-  },
-  "engines": {
-    "node": "0.12.7"
+    "passport-jwt": "^2.0.0"
   },
   "repository": {
     "type": "git",
